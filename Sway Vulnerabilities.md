@@ -122,3 +122,413 @@ Each of these vulnerabilities, if left unchecked, could lead to significant secu
 
 # code examples for each vulnerability
 
+Here are code examples for each vulnerability related to Sway programming, along with mitigation techniques.
+
+### 1. **Re-entrancy Attack**
+#### Vulnerable Code:
+```rust
+contract {
+    pub fn withdraw(amount: u64) -> bool {
+        if self.balances[msg.sender] >= amount {
+            msg.sender.transfer(amount);  // External call
+            self.balances[msg.sender] -= amount; // State update happens after external call
+            true
+        } else {
+            false
+        }
+    }
+}
+```
+#### Mitigation:
+```rust
+contract {
+    pub fn withdraw(amount: u64) -> bool {
+        if self.balances[msg.sender] >= amount {
+            self.balances[msg.sender] -= amount; // State update before external call
+            msg.sender.transfer(amount);
+            true
+        } else {
+            false
+        }
+    }
+}
+```
+
+### 2. **Integer Overflow/Underflow**
+#### Vulnerable Code:
+```rust
+contract {
+    pub fn add(a: u64, b: u64) -> u64 {
+        a + b  // This can overflow
+    }
+}
+```
+#### Mitigation:
+```rust
+contract {
+    pub fn add(a: u64, b: u64) -> u64 {
+        assert(a + b >= a);  // Ensure no overflow occurs
+        a + b
+    }
+}
+```
+
+### 3. **Unchecked Call Return Values**
+#### Vulnerable Code:
+```rust
+contract {
+    pub fn call_other_contract(addr: Address) {
+        addr.call(); // Ignoring return value
+    }
+}
+```
+#### Mitigation:
+```rust
+contract {
+    pub fn call_other_contract(addr: Address) -> bool {
+        let success = addr.call();
+        assert(success);  // Check call return value
+        success
+    }
+}
+```
+
+### 4. **Denial of Service (DoS) via Gas Limit**
+#### Vulnerable Code:
+```rust
+contract {
+    pub fn process_large_array(arr: [u64; 1000]) {
+        for val in arr {  // Can consume too much gas in one transaction
+            self.process(val);
+        }
+    }
+}
+```
+#### Mitigation:
+```rust
+contract {
+    pub fn process_large_array(arr: [u64; 100], start: u64) {
+        for i in start..(start + 10) {  // Process in chunks
+            self.process(arr[i]);
+        }
+    }
+}
+```
+
+### 5. **Insufficient Access Control**
+#### Vulnerable Code:
+```rust
+contract {
+    pub fn update_admin(new_admin: Address) {
+        self.admin = new_admin;  // Anyone can call this
+    }
+}
+```
+#### Mitigation:
+```rust
+contract {
+    pub fn update_admin(new_admin: Address) {
+        assert(msg.sender == self.admin);  // Only admin can update
+        self.admin = new_admin;
+    }
+}
+```
+
+### 6. **Uninitialized Storage Variables**
+#### Vulnerable Code:
+```rust
+contract {
+    pub fn get_balance(addr: Address) -> u64 {
+        self.balances[addr]  // Uninitialized storage variable
+    }
+}
+```
+#### Mitigation:
+```rust
+contract {
+    pub fn get_balance(addr: Address) -> u64 {
+        if let Some(balance) = self.balances.get(addr) {
+            balance
+        } else {
+            0  // Initialize with default value
+        }
+    }
+}
+```
+
+### 7. **Cross-Contract Dependency Vulnerabilities**
+#### Vulnerable Code:
+```rust
+contract {
+    pub fn call_external_contract(addr: Address) {
+        addr.call();  // Unchecked dependency
+    }
+}
+```
+#### Mitigation:
+```rust
+contract {
+    pub fn call_external_contract(addr: Address) {
+        assert(self.is_trusted(addr));  // Validate external contract
+        addr.call();
+    }
+}
+```
+
+### 8. **Timestamp Manipulation**
+#### Vulnerable Code:
+```rust
+contract {
+    pub fn lock_until(time: u64) {
+        assert(block.timestamp > time);  // Using block.timestamp directly
+    }
+}
+```
+#### Mitigation:
+```rust
+contract {
+    pub fn lock_until(block_num: u64) {
+        assert(block.number > block_num);  // Use block.number instead of timestamp
+    }
+}
+```
+
+### 9. **Front-running Attacks**
+#### Vulnerable Code:
+```rust
+contract {
+    pub fn bid() {
+        let bid_amount = msg.value;  // Can be front-run
+        self.highest_bid = bid_amount;
+    }
+}
+```
+#### Mitigation:
+```rust
+contract {
+    pub fn commit_bid(commitment: u64) {
+        self.commitments[msg.sender] = commitment;  // Commit-reveal scheme
+    }
+    
+    pub fn reveal_bid(actual_bid: u64) {
+        let commitment = self.commitments[msg.sender];
+        assert(hash(actual_bid) == commitment);  // Reveal stage
+        self.highest_bid = actual_bid;
+    }
+}
+```
+
+### 10. **Unchecked External Calls**
+#### Vulnerable Code:
+```rust
+contract {
+    pub fn external_call(addr: Address) {
+        addr.call();  // Assuming external call succeeds
+    }
+}
+```
+#### Mitigation:
+```rust
+contract {
+    pub fn external_call(addr: Address) -> bool {
+        let success = addr.call();
+        assert(success);  // Always check if the call was successful
+        success
+    }
+}
+```
+
+### 11. **Delegatecall Injection**
+#### Vulnerable Code:
+```rust
+contract {
+    pub fn execute_code(addr: Address) {
+        addr.delegatecall();  // Can lead to malicious code execution
+    }
+}
+```
+#### Mitigation:
+```rust
+contract {
+    pub fn execute_code(addr: Address) {
+        assert(self.is_trusted(addr));  // Ensure contract is trusted
+        addr.delegatecall();
+    }
+}
+```
+
+### 12. **Insecure Randomness**
+#### Vulnerable Code:
+```rust
+contract {
+    pub fn get_random() -> u64 {
+        block.timestamp  // Can be manipulated
+    }
+}
+```
+#### Mitigation:
+```rust
+contract {
+    pub fn get_random() -> u64 {
+        oracle.get_random_value()  // Use a verified off-chain randomness source
+    }
+}
+```
+
+### 13. **Floating-Point Precision Loss**
+#### Vulnerable Code:
+```rust
+contract {
+    pub fn calculate(a: f64, b: f64) -> f64 {
+        a / b  // Inaccurate division
+    }
+}
+```
+#### Mitigation:
+```rust
+contract {
+    pub fn calculate(a: u64, b: u64) -> u64 {
+        (a * 100) / b  // Use fixed-point arithmetic for precise calculations
+    }
+}
+```
+
+### 14. **Insufficient Input Validation**
+#### Vulnerable Code:
+```rust
+contract {
+    pub fn transfer(amount: u64) {
+        self.balance[msg.sender] -= amount;  // No input validation
+    }
+}
+```
+#### Mitigation:
+```rust
+contract {
+    pub fn transfer(amount: u64) {
+        assert(amount > 0 && amount <= self.balance[msg.sender]);  // Validate inputs
+        self.balance[msg.sender] -= amount;
+    }
+}
+```
+
+### 15. **Authorization Flaws**
+#### Vulnerable Code:
+```rust
+contract {
+    pub fn set_value(value: u64) {
+        self.value = value;  // No authorization check
+    }
+}
+```
+#### Mitigation:
+```rust
+contract {
+    pub fn set_value(value: u64) {
+        assert(msg.sender == self.owner);  // Only authorized user can set value
+        self.value = value;
+    }
+}
+```
+
+### 16. **Outdated Dependencies**
+#### Vulnerable Code:
+```rust
+contract {
+    use old_library::*;  // Using outdated or unpatched library
+}
+```
+#### Mitigation:
+```rust
+contract {
+    use latest_library::*;  // Regularly update to the latest versions of dependencies
+}
+```
+
+### 17. **Lack of Event Logging**
+#### Vulnerable Code:
+```rust
+contract {
+    pub fn transfer(amount: u64) {
+        self.balance[msg.sender] -= amount;  // No event logging
+    }
+}
+```
+#### Mitigation:
+```rust
+contract {
+    event Transfer(address from, address to, u64 amount);
+    
+    pub fn transfer(amount: u64) {
+        self.balance[msg.sender] -= amount;
+        emit Transfer(msg.sender, to, amount);  // Log important actions
+    }
+}
+```
+
+### 18. **Unbounded Loops**
+#### Vulnerable Code:
+```rust
+contract {
+    pub fn process_all() {
+        for i in 0..self.items.length() {  // Unbounded loop
+            self.process(self.items[i]);
+        }
+    }
+}
+```
+#### Mitigation:
+```rust
+contract {
+    pub fn process_all_in_batches(batch_size: u64) {
+        for i in 0..batch_size {  // Process in batches
+            self.process(self.items[i]);
+        }
+    }
+}
+```
+
+### 19. **Phishing via Contract Interface**
+#### Vulnerable Code:
+```rust
+contract {
+    pub fn execute_contract(addr: Address) {
+        addr.call();  // User might interact with a malicious contract
+    }
+}
+```
+#### Mitigation:
+```rust
+contract {
+    pub fn execute_contract(addr: Address) {
+        assert(addr == trusted_contract);  // Ensure only trusted contracts are called
+        addr.call();
+    }
+}
+```
+
+### 20. **Signature Replay Attacks**
+#### Vulnerable Code:
+```rust
+contract {
+    pub fn submit_signed_transaction(sig
+
+: Signature) {
+        assert(verify_signature(sig));  // No nonce to prevent replay
+    }
+}
+```
+#### Mitigation:
+```rust
+contract {
+    pub fn submit_signed_transaction(sig: Signature, nonce: u64) {
+        assert(verify_signature(sig) && nonce == self.expected_nonce);  // Add a nonce check
+        self.expected_nonce += 1;  // Update nonce
+    }
+}
+```
+
+---
+
+These examples cover common vulnerabilities and their respective mitigations. Each code snippet illustrates a basic way to address the corresponding vulnerability, helping to build secure and efficient smart contracts.
+
