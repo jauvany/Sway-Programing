@@ -75,3 +75,56 @@ Here’s how I would like the exercise to be structured:
 1. A brief introduction explaining the purpose of the contract.  
 2. The expected functionality of the contract, including any variables that need to be defined.  
 3. Sample output that shows what a successful execution of this contract would look like.
+
+Here's an example Sway programming exercise that focuses on writing a simple smart contract:
+
+```sway
+// 1. Brief Introduction
+// This contract allows users to store and retrieve a value.
+
+// 2. Expected Functionality
+// - Define a variable to store the value.
+// - Create a function to store the value.
+// - Create a function to retrieve the value.
+
+// 3. Sample Output
+// When the contract is executed successfully, it should print:
+// "Value stored: 42"
+// "Retrieved value: 42"
+
+#[contract]
+mod my_contract {
+    use super::*;
+
+    // Define the variable to store the value
+    #[storage(default)]
+    pub let stored_value: u64 = 0;
+
+    // Function to store a value
+    #[mut]
+    pub fn store_value(value: u64) {
+        stored_value = value;
+    }
+
+    // Function to retrieve the value
+    pub fn retrieve_value() -> u64 {
+        stored_value
+    }
+
+    // Test the contract
+    #[test]
+    fn test() {
+        let _ = store_value(42);
+        assert_eq!(retrieve_value(), 42);
+    }
+}
+```
+
+In this exercise:
+- The contract introduces the purpose and explains the expected functionality.
+- The `stored_value` variable is defined to store the value.
+- Two functions, `store_value` and `retrieve_value`, are created to set and retrieve the value, respectively.
+- The `test` function demonstrates how to test the contract and ensures that the value is correctly stored and retrieved.
+- The expected output is provided as comments in the code.
+
+This exercise is concise and focused on the core concepts of Sway, such as variables, functions, and basic control flow. It allows learners to see immediate results after implementing the code and understand how to store and retrieve values in a smart contract.
