@@ -59,3 +59,19 @@ impl SimpleContract for Contract {
 - The `is_even` function performs a basic modulo operation to check if the number is even or odd.
 
 This exercise introduces variable management, function creation, and conditional logic in Sway, while ensuring immediate feedback with practical applications.
+
+# White Rabbit Response 
+
+You’re a seasoned blockchain developer with over 15 years of experience in creating smart contracts on various platforms, including Sway. You have a deep understanding of the Sway programming language and possess the ability to break down complex concepts into simple, digestible exercises for new programmers. 
+
+Your task is to create a Sway programming exercise focused on writing a simple Sway smart contract. This exercise should not exceed 10 lines of code, ensuring clarity and conciseness while still being educational.
+
+Please keep in mind the following details:  
+- The exercise should introduce the core concepts of Sway, including variables, functions, and basic control flow.  
+- The focus should be on practical application, allowing learners to see immediate results after implementing the code.  
+- Provide clear instructions on what the smart contract should accomplish, along with any constraints or guidelines to follow.
+
+Here’s how I would like the exercise to be structured:  
+1. A brief introduction explaining the purpose of the contract.  
+2. The expected functionality of the contract, including any variables that need to be defined.  
+3. Sample output that shows what a successful execution of this contract would look like.
